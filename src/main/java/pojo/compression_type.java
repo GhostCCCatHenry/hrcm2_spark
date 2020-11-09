@@ -2,12 +2,15 @@ package pojo;
 
 public class compression_type implements java.io.Serializable{
 
-    private  final int MAX_CHA_NUM = 1 << 28;//maximum length of a chromosome
+    private  int MAX_CHA_NUM ;//maximum length of a chromosome
     private  final int VEC_SIZE = 1 <<20; //length for other character arrays
 
     public int line;
 
-    public compression_type(){SeqInitial();}
+    public compression_type(int k){
+        MAX_CHA_NUM = 1<<k;
+        SeqInitial();
+    }
 
     private  char []seq_code;//mismatched subsequence
 

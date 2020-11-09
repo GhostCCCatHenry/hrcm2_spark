@@ -29,6 +29,7 @@ import static org.apache.spark.api.java.StorageLevels.*;
 
 public class App {
 
+    private static int k;//
     private static final int VEC_SIZE = 1 << 20;
 //    private static final int PERCENT = 15; //the percentage of compressed sequence number uses as reference
     private static final int kMerLen = 13; //the length of k-mer
@@ -37,7 +38,7 @@ public class App {
 //    private static int sec_seq_num = 120;
     private static int seqBucketLen = getNextPrime(1<<20);
     //kryo序列化注册类，自定义的类必须要经过注册
-    private static void createRefBroadcast(reference_type ref,String filename){
+    private static reference_type createRefBroadcast(String filename) throws IOException{
         String str;
         char []cha;
         int _seq_code_len = 0, _ref_low_len = 1, letters_len = 0;//record lowercase from 1, diff_lowercase_loc[i]=0 means mismatching
@@ -49,55 +50,58 @@ public class App {
         //最好把参考序列读取本地化，集群化可能会拖慢速度！Driver与Executor的关系！
 /*        Configuration conf = new Configuration();//访问hdfs用 Hadoop配置对象。
         Path path = new Path(filename);*/
-        try {
+
 /*            FileSystem fs = FileSystem.get(conf);
-            FSDataInputStream is = fs.open(path);//创造HDFS输入流*/
-            BufferedReader br = new BufferedReader(new FileReader(file));//使用Reader缓冲输入流的信息，被BufferedReader读取
-            str = br.readLine();
-            while((str=br.readLine())!=null){
-                cha = str.toCharArray();
-                for (char a: cha) {
-                    temp_cha=a;
-                    if(Character.isLowerCase(temp_cha)){
-                        if (flag) //previous is upper case
-                        {
-                            flag = false; //change status of flag
-                            ref.set_Ref_low_begin_byturn(letters_len,_ref_low_len);
-                            //ref_low_begin[_ref_low_len] = letters_len;
-                            letters_len = 0;
-                        }
-                        temp_cha = Character.toUpperCase(temp_cha);
+        FSDataInputStream is = fs.open(path);//创造HDFS输入流*/
+        BufferedReader br = new BufferedReader(new FileReader(file));//使用Reader缓冲输入流的信息，被BufferedReader读取
+        str = br.readLine();
+        if(str.equals(">chr1")||str.equals(">chr2")||str.equals(">chr3")||str.equals(">chr4")
+                ||str.equals(">chr5")||str.equals(">chr6")||str.equals(">chr7")||str.equals(">chr8")
+                ||str.equals(">chr9")||str.equals(">chr10")||str.equals(">chr11")||str.equals(">chr12")
+                ||str.equals(">chr13")||str.equals(">chrX")) k = 28;
+        else k = 27;
+        reference_type ref = new reference_type(k);
+        while((str=br.readLine())!=null){
+            cha = str.toCharArray();
+            for (char a: cha) {
+                temp_cha=a;
+                if(Character.isLowerCase(temp_cha)){
+                    if (flag) //previous is upper case
+                    {
+                        flag = false; //change status of flag
+                        ref.set_Ref_low_begin_byturn(letters_len,_ref_low_len);
+                        //ref_low_begin[_ref_low_len] = letters_len;
+                        letters_len = 0;
                     }
-                    else {
-                        if (!flag)  //previous is lower case
-                        {
-                            flag = true;
-                            ref.set_Ref_low_length_byturn(letters_len,_ref_low_len);
-                            _ref_low_len++;
-                            //ref_low_length[_ref_low_len++] = letters_len;
-                            letters_len = 0;
-                        }
-                    }
-                    if (temp_cha == 'A' || temp_cha == 'C' || temp_cha == 'G' || temp_cha == 'T'){
-                        ref.set_Ref_code_byturn(temp_cha,_seq_code_len);
-                        _seq_code_len++;
-                    }
-                    letters_len++;
+                    temp_cha = Character.toUpperCase(temp_cha);
                 }
+                else {
+                    if (!flag)  //previous is lower case
+                    {
+                        flag = true;
+                        ref.set_Ref_low_length_byturn(letters_len,_ref_low_len);
+                        _ref_low_len++;
+                        //ref_low_length[_ref_low_len++] = letters_len;
+                        letters_len = 0;
+                    }
+                }
+                if (temp_cha == 'A' || temp_cha == 'C' || temp_cha == 'G' || temp_cha == 'T'){
+                    ref.set_Ref_code_byturn(temp_cha,_seq_code_len);
+                    _seq_code_len++;
+                }
+                letters_len++;
             }
-            br.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
+        br.close();
+
         ref.set_Ref_code_len(_seq_code_len);
         ref.set_Ref_low_len(_ref_low_len);
 
         kMerHashingConstruct(ref);
+        return ref;
     }
 
-    private static compression_type createSeqRDD(Iterator<Tuple2<Text,Text>> s){
+    private static compression_type createSeqRDD(Iterator<Tuple2<Text,Text>> s,Broadcast<Integer> _k){
         //这一部分才由Executor执行，所以涉及的两个type必须要封装序列化！
         int letters_len = 0, n_letters_len = 0;
         boolean flag = true, n_flag = false;
@@ -105,7 +109,7 @@ public class App {
 
         String str;
         char[] cha;      //the content of one line
-        compression_type c = new compression_type();
+        compression_type c = new compression_type(_k.value());
         c.identifier = s.next()._1.toString();
 //        c.identifier = s.next();
 
@@ -462,7 +466,7 @@ public class App {
         StringBuilder mismatched_str = new StringBuilder();
         List<MatchEntry> mr = new ArrayList<>();
         //mismatched_str.reserve(10240);
-        MatchEntry me = null;
+        MatchEntry me ;
         //matchResult.reserve(VEC_SIZE);
         for (i = 0; i < step_len; i++) {
             tar_value = 0;
@@ -654,7 +658,7 @@ public class App {
         System.out.println(seqNum+" code second match complete. The second match length: "+secondMatchTotalLength);
     }
 
-    public static void compress(String ref_file,String tar_file,String out_path){
+    public static void compress(String ref_file,String tar_file,String out_path)throws IOException{
         SparkConf sparkConf = new SparkConf();
         //实现kryo序列化方式并注册需要使用序列化的类
         sparkConf.set("spark.serializer","org.apache.spark.serializer.KryoSerializer");
@@ -677,22 +681,19 @@ public class App {
             使用FileSystemAPI
             读取参考序列以及清理输出位置
         * */
-        try {
-            FileSystem fs =FileSystem.get(jsc.hadoopConfiguration());
-            if(fs.exists(path2)){
-                fs.delete(path2,true);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        FileSystem fs =FileSystem.get(jsc.hadoopConfiguration());
+        if(fs.exists(path2)){
+            fs.delete(path2,true);
         }
-        reference_type ref = new reference_type();
-        createRefBroadcast(ref,ref_file);
+
+        reference_type ref = createRefBroadcast(ref_file);
         //对参考序列进行广播变量
         final Broadcast<reference_type> referenceTypeBroadcast = jsc.broadcast(ref);
-
-        //一次压缩参考序列释放
-        referenceTypeBroadcast.unpersist();
-        JavaRDD<String> tar_rdd = jsc.textFile(tar_file); //路径为文件夹在HDFS上的全路径
+        final Broadcast<Integer> kk = jsc.broadcast(k);
+//        //一次压缩参考序列释放
+//        referenceTypeBroadcast.unpersist();
+//        JavaRDD<String> tar_rdd = jsc.textFile(tar_file); //路径为文件夹在HDFS上的全路径
         //创建待压缩序列RDD，这个RDD需要缓存！
         JavaPairRDD<Text,Text> ta_rdd = jsc.newAPIHadoopFile(tar_file, KeyValueTextInputFormat.class, Text.class ,Text.class ,jsc.hadoopConfiguration());
         JavaRDD<Tuple3<Integer,List<MatchEntry>,List<String>>> first_match = ta_rdd.mapPartitions(s1->{
@@ -703,7 +704,7 @@ public class App {
              * */
             List<compression_type> list = new ArrayList<>();
             //封装进去 完成输出
-            list.add(createSeqRDD(s1));
+            list.add(createSeqRDD(s1,kk));
             return list.iterator();
         }).mapPartitionsWithIndex((v1,v2)->{
             List<Tuple3<Integer,List<MatchEntry>,List<String>>> li = new ArrayList<>();
