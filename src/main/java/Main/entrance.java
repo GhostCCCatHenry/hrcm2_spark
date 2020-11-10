@@ -3,9 +3,11 @@ package Main;
 import Service.App;
 import scala.tools.nsc.Global;
 
+import java.io.IOException;
+
 public class entrance {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
 //        String str1 = "D:\\geneEXP\\HRCMspark\\chr1.fa";
 
