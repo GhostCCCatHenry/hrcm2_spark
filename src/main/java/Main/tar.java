@@ -35,7 +35,9 @@ public class tar {
 //            File dir = new File("D:\\geneEXP\\out\\");
             archive(dir,new File(tmp+"/out.tar"));
             if(!output.exists()) System.out.println(output.mkdir());
-            callShell("libbsc-master/bsc e "+tmp+"/out.tar "+finalOut+"/out.bsc");
+            callShell("./bsc e "+tmp+"/out.tar "+finalOut+"/out.bsc");
+            System.out.println(deleteFile(dir));
+            System.out.println(deleteFile(new File(tmp+"/out.tar")));
             fs.close();
         } catch (Exception e) {
             e.printStackTrace();

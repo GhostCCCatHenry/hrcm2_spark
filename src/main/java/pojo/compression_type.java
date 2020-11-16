@@ -113,11 +113,11 @@ public class compression_type implements java.io.Serializable{
     private void SeqInitial(){
         nCha_begin= new int[VEC_SIZE/4];
         nCha_length= new int[VEC_SIZE/4];
-        spe_cha_pos= new int[VEC_SIZE/8];
+        spe_cha_pos= new int[VEC_SIZE/4];
         seq_code= new char[MAX_CHA_NUM];
         seq_low_begin= new int[VEC_SIZE/4];
         seq_low_length= new int[VEC_SIZE/4];
-        spe_cha_ch= new int[VEC_SIZE/8];
+        spe_cha_ch= new int[VEC_SIZE/4];
         low_loc = new int[VEC_SIZE/2];
     }
 
