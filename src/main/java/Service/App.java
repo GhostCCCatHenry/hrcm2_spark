@@ -1,8 +1,7 @@
 package Service;
 
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -22,6 +21,8 @@ import scala.Tuple2$;
 import scala.Tuple3;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 
 import static java.lang.Math.*;
@@ -29,7 +30,7 @@ import static org.apache.spark.api.java.StorageLevels.*;
 
 public class App {
 
-    private static int k;//
+    private static int k = 28;//
     private static final int VEC_SIZE = 1 << 20;
 //    private static final int PERCENT = 15; //the percentage of compressed sequence number uses as reference
     private static final int kMerLen = 13; //the length of k-mer
@@ -575,6 +576,25 @@ public class App {
         System.out.println(seqNum+" code second match complete. The second match length: "+secondMatchTotalLength);
     }
 
+    //将待压缩路径保存至hdfs上
+    private static void  saveName(String namePath,String outpath) {
+        try {
+            String name = null;
+            Configuration conf = new Configuration();
+            conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+            FileSystem fs = FileSystem.get(new URI("hdfs://master:9000"), conf);
+            FileStatus[] fss = fs.listStatus(new Path(namePath));
+            FSDataOutputStream out = fs.create(new Path(outpath+"/hdfs_name.txt"));
+            for (FileStatus f : fss) {
+                out.writeUTF(f.getPath().getName()+"\n");
+            }
+        } catch (IOException | URISyntaxException e) {
+            e.printStackTrace();
+        }
+//        seqNumber = seqName.size();
+    }
+
+
     public static void compress(String ref_file,String tar_file,String out_path)throws IOException{
         SparkConf sparkConf = new SparkConf();
         //实现kryo序列化方式并注册需要使用序列化的类
@@ -603,6 +623,7 @@ public class App {
         if(fs.exists(path2)){
             fs.delete(path2,true);
         }
+        saveName(tar_file,out_path);
 
         reference_type ref = createRefBroadcast(ref_file);
         //对参考序列进行广播变量
@@ -693,9 +714,6 @@ public class App {
 //            Tuple3<Integer,List<MatchEntry>,List<String>> tu3;
             Tuple3<Integer,List<MatchEntry>,List<String>> tar;
             //根据分区号来进行筛选
-//            System.out.println(sec_ref.value()._1().size());
-//            System.out.println(sec_ref.value()._2().size()+" "+sec_ref.value()._2().get(0).length);
-//            System.out.println(sec_ref.value()._3().size()+" "+sec_ref.value()._3().get(0).size());
             while (s.hasNext()&&sec_ref.value()!=null) {
                 tar = s.next();
                 list = tar._3();

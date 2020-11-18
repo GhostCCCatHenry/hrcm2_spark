@@ -14,7 +14,7 @@ public class entrance {
 //        String str1 = "/home/gene/hg13/chr1.fa";
         String str1 = args[0];//参考序列路径
         String str2 = args[1];//带压缩文件夹路径
-        String str3 = "/home/gene/out";//中间结果写死
+        String str3 = "/tmp/out";//中间结果写死
         String Out = args[2];//输出路径
 //        String str2 = "hdfs://master:9000/chr1/1/";
 //        String str1 ="D:\\geneEXP\\HRCMspark\\chr1.fa";
