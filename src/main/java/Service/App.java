@@ -297,19 +297,6 @@ public class App {
             }
             code.add(cnt);
         }
-/*        int code_len = code.size();
-        //PrintWriter wr = new PrintWriter(new FileWriter(fp));
-        try {
-            wr.write(code_len);
-            for (int i: code) {
-                wr.write(i+" ");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-        System.out.println("RunlenFinish");
-
         return code;
     }
 
@@ -505,8 +492,7 @@ public class App {
         }
         sbf.append(matchEntry.getPos()).append(' ').append(matchEntry.getLength());
         list.add(sbf.toString());
-/*        list.add(String.valueOf(matchEntry.getLength()));
-        list.add(" ");*/
+
     }
 
     private static void codeSecondMatch( List<MatchEntry> _mr, int seqNum, Map<Integer,int[]> seqBucket_vec,
@@ -601,7 +587,6 @@ public class App {
         sparkConf.set("spark.serializer","org.apache.spark.serializer.KryoSerializer");
         // 使用setMaster()可以设置Spark应用程序要连接的Spark集群的master节点的url
         // 但是如果设置为local[*]则代表，在本地使用最大线程运行
-//        String masterurl = "spark://10.166.38.112:7077";
         sparkConf.set("spark.kryo.registrator", mykryo.class.getName()).setAppName("geneCompress").setMaster("yarn");
         sparkConf.set("spark.kryoserializer.buffer.max","2000").set("spark.driver.maxResultSize", "6g").set("spark.shuffle.sort.bypassMergeThreshold","20");
         /*sparkConf.set("spark.default.parallelism", "20");*/
@@ -697,17 +682,6 @@ public class App {
         ref.setRefLoc(null);
         ref.setRefBucket(null);
         final Broadcast<Tuple3<Map<Integer,List<MatchEntry>>,Map<Integer,int[]>,Map<Integer,List<Integer>>>> sec_ref = jsc.broadcast(ref2);
-/*
-        JavaRDD<Tuple2<List<int[]>,List<List<Integer>>>> sec2 = sec.map(s->{
-            List<int[]> seqBucketVec = new ArrayList<>();
-            List<List<Integer>> seqLocVec = new ArrayList<>(); //存储所有序列的冲突元素
-            for (List<MatchEntry> a: s) {
-                matchResultHashConstruct(a,seqBucketVec,seqLocVec);
-            }
-            return new Tuple2<>(seqBucketVec,seqLocVec);
-        });
-*/
-//        final Broadcast<Tuple2<List<int[]>,List<List<Integer>>>> sec_ref2 = jsc.broadcast(sec2.first());
 
         first_match.mapPartitions(s->{
             List<String> list = new ArrayList<>();
