@@ -24,8 +24,6 @@ public class tar {
             for (FileStatus f : fss) {
                 name = f.getPath().getName()+"\n";
                 bw.write(name);
-                System.out.println("1");
-//                out.write(name.getBytes(),0, name.getBytes().length);
             }
             bw.flush();
         } catch (IOException e) {
