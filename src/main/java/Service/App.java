@@ -1,28 +1,18 @@
 package Service;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.rdd.HadoopRDD;
-import org.apache.spark.storage.StorageLevel;
 import pojo.*;
 import scala.Tuple2;
-import scala.Tuple2$;
 import scala.Tuple3;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 
 import static java.lang.Math.*;
@@ -49,11 +39,7 @@ public class App {
         File file = new File(filename);
 
         //最好把参考序列读取本地化，集群化可能会拖慢速度！Driver与Executor的关系！
-/*        Configuration conf = new Configuration();//访问hdfs用 Hadoop配置对象。
-        Path path = new Path(filename);*/
 
-/*            FileSystem fs = FileSystem.get(conf);
-        FSDataInputStream is = fs.open(path);//创造HDFS输入流*/
         BufferedReader br = new BufferedReader(new FileReader(file));//使用Reader缓冲输入流的信息，被BufferedReader读取
         str = br.readLine();
         if(str.equals(">chr1")||str.equals(">chr2")||str.equals(">chr3")||str.equals(">chr4")
@@ -562,23 +548,7 @@ public class App {
         System.out.println(seqNum+" code second match complete. The second match length: "+secondMatchTotalLength);
     }
 
-    //将待压缩路径保存至hdfs上
-    private static void  saveName(String namePath,String outpath) {
-        try {
-            String name = null;
-            Configuration conf = new Configuration();
-            conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-            FileSystem fs = FileSystem.get(new URI("hdfs://master:9000"), conf);
-            FileStatus[] fss = fs.listStatus(new Path(namePath));
-            FSDataOutputStream out = fs.create(new Path(outpath+"/hdfs_name.txt"));
-            for (FileStatus f : fss) {
-                out.writeUTF(f.getPath().getName()+"\n");
-            }
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
-        }
-//        seqNumber = seqName.size();
-    }
+
 
 
     public static void compress(String ref_file,String tar_file,String out_path)throws IOException{
@@ -608,8 +578,6 @@ public class App {
         if(fs.exists(path2)){
             fs.delete(path2,true);
         }
-        saveName(tar_file,out_path);
-
         reference_type ref = createRefBroadcast(ref_file);
         //对参考序列进行广播变量
         final Broadcast<reference_type> referenceTypeBroadcast = jsc.broadcast(ref);
@@ -704,6 +672,7 @@ public class App {
         }).saveAsTextFile(path2.toString());
         sec_ref.unpersist();
         first_match.unpersist();
+//        saveName(jsc,tar_file,out_path);
     }
 }
 

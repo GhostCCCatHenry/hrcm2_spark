@@ -3,19 +3,42 @@ package Main;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.spark.api.java.JavaSparkContext;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 public class tar {
-    //    private FSDataInputStream fsDataInputStream = null;
-    public void FSfetch(String outfile,String finalOut){
+
+    //将待压缩路径保存至hdfs上
+    private static void saveName(FileSystem fs,String namePath,File out) {
+        try {
+            String name = null;
+//            Configuration conf = new Configuration();
+//            conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
+//            FileSystem fs = FileSystem.get(conf);
+            FileStatus[] fss = fs.listStatus(new Path(namePath));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(out));
+//            FSDataOutputStream out = fs.create(new Path(outpath+"/hdfs_name.txt"));
+            for (FileStatus f : fss) {
+                name = f.getPath().getName()+"\n";
+                bw.write(name);
+//                out.write(name.getBytes(),0, name.getBytes().length);
+            }
+            bw.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void FSfetch(String inputfile, String outfile,String finalOut){
         Configuration conf = new Configuration();
         Path inpath = new Path(outfile);
 //        Path tmp = new Path("D:\\geneEXP\\out");//中间结果
@@ -26,9 +49,11 @@ public class tar {
         //也可以通过如下的方式去指定文件系统的类型，并且同时设置用户身份
 //        FileSystem fs = FileSystem.get(new URI("hdfs://node1:9000"),conf,"root");
         try {
+
             conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
             FileSystem fs = FileSystem.get(new URI("hdfs://master:9000"), conf);
             File dir = new File(tmp+"/out");
+            saveName(fs,inputfile,dir);
             File output = new File(finalOut);
             System.out.println(deleteFile(dir));
             fs.moveToLocalFile(inpath,new Path(tmp));
