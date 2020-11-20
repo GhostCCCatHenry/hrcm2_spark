@@ -11,7 +11,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Objects;
 
 public class tar {
@@ -20,12 +19,8 @@ public class tar {
     private static void saveName(FileSystem fs,String namePath,File out) {
         try {
             String name = null;
-//            Configuration conf = new Configuration();
-//            conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
-//            FileSystem fs = FileSystem.get(conf);
             FileStatus[] fss = fs.listStatus(new Path(namePath));
             BufferedWriter bw = new BufferedWriter(new FileWriter(out));
-//            FSDataOutputStream out = fs.create(new Path(outpath+"/hdfs_name.txt"));
             for (FileStatus f : fss) {
                 name = f.getPath().getName()+"\n";
                 bw.write(name);
