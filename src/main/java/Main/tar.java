@@ -16,14 +16,15 @@ import java.util.Objects;
 public class tar {
 
     //将待压缩路径保存至hdfs上
-    private static void saveName(FileSystem fs,String namePath,File out) {
+    private static void saveName(FileSystem fs,String namePath,String out) {
         try {
             String name = null;
             FileStatus[] fss = fs.listStatus(new Path(namePath));
-            BufferedWriter bw = new BufferedWriter(new FileWriter(out));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(new File(out)));
             for (FileStatus f : fss) {
                 name = f.getPath().getName()+"\n";
                 bw.write(name);
+                System.out.println("1");
 //                out.write(name.getBytes(),0, name.getBytes().length);
             }
             bw.flush();
@@ -48,10 +49,11 @@ public class tar {
             conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
             FileSystem fs = FileSystem.get(new URI("hdfs://master:9000"), conf);
             File dir = new File(tmp+"/out");
-            saveName(fs,inputfile,dir);
+
             File output = new File(finalOut);
             System.out.println(deleteFile(dir));
             fs.moveToLocalFile(inpath,new Path(tmp));
+            saveName(fs,inputfile,tmp+"/out/hdfs_name.txt");
 //            File dir = new File("D:\\geneEXP\\out\\");
             archive(dir,new File(tmp+"/out.tar"));
             if(!output.exists()) System.out.println(output.mkdir());

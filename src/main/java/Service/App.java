@@ -483,7 +483,7 @@ public class App {
 
     private static void codeSecondMatch( List<MatchEntry> _mr, int seqNum, Map<Integer,int[]> seqBucket_vec,
                                          Map<Integer,List<Integer>> seqLoc_vec , Map<Integer,List<MatchEntry>> matchResult_vec,
-                                         List<String> list) {
+                                         List<String> list,int percent) {
         int hashValue;
         int pre_seq_id=1;
         int max_pos=0, pre_pos=0, delta_pos, length, max_length, delta_length, seq_id=0, delta_seq_id;
@@ -499,7 +499,7 @@ public class App {
             else hashValue = abs(getHashValue(_mr.get(i)) + getHashValue(_mr.get(i+1))) % seqBucketLen;
             max_length = 0;
             //寻找相同序列
-            for (int m = 0; m < min( seqNum-1, 45); m++) {
+            for (int m = 0; m < min( seqNum-1, percent); m++) {
                 id = seqBucket_vec.get(m)[hashValue];//寻找出参考序列组的前m个编码序列依次匹配
                 if (id!=-1) {
                     for (pos = id; pos!=-1; pos = seqLoc_vec.get(m).get(pos)) {
@@ -573,7 +573,7 @@ public class App {
             使用FileSystemAPI
             读取参考序列以及清理输出位置
         * */
-
+        int per = 45;
         FileSystem fs =FileSystem.get(jsc.hadoopConfiguration());
         if(fs.exists(path2)){
             fs.delete(path2,true);
@@ -582,6 +582,7 @@ public class App {
         //对参考序列进行广播变量
         final Broadcast<reference_type> referenceTypeBroadcast = jsc.broadcast(ref);
         final Broadcast<Integer> kk = jsc.broadcast(k);
+        final Broadcast<Integer> percent = jsc.broadcast(per);
 //        //一次压缩参考序列释放
 //        referenceTypeBroadcast.unpersist();
 //        JavaRDD<String> tar_rdd = jsc.textFile(tar_file); //路径为文件夹在HDFS上的全路径
@@ -621,12 +622,13 @@ public class App {
         需要产生两个依赖！
         * */
 //        read_tar.unpersist();//不需要缓存了
-        JavaRDD<Tuple3<Map<Integer,List<MatchEntry>>,Map<Integer,int[]>,Map<Integer,List<Integer>>>> sec = first_match.filter(s->s._1()<=45)
+        JavaRDD<Tuple3<Map<Integer,List<MatchEntry>>,Map<Integer,int[]>,Map<Integer,List<Integer>>>> sec = first_match.filter(s->s._1()<=percent.getValue())
                 .coalesce(1,true).mapPartitions(s->{
+                    int pr = percent.getValue();
                     List<Tuple3<Map<Integer,List<MatchEntry>>,Map<Integer,int[]>,Map<Integer,List<Integer>>>> list = new ArrayList<>();
-                    Map<Integer,List<MatchEntry>> MatchList = new HashMap<>(47);
-                    Map<Integer,List<Integer>> seqLoc = new HashMap<>(47);
-                    Map<Integer,int[]> seqBucket = new HashMap<>(47);
+                    Map<Integer,List<MatchEntry>> MatchList = new HashMap<>();
+                    Map<Integer,List<Integer>> seqLoc = new HashMap<>(pr+2);
+                    Map<Integer,int[]> seqBucket = new HashMap<>(pr+2);
 /*              List<Tuple3<List<MatchEntry>,int[],List<Integer>>> li = new ArrayList<>();
                 int[] seqBucketVec = new int[seqBucketLen];
                 List<Integer> seqLocVec = new ArrayList<>(); //存储所有序列的冲突元素*/
@@ -652,6 +654,7 @@ public class App {
         final Broadcast<Tuple3<Map<Integer,List<MatchEntry>>,Map<Integer,int[]>,Map<Integer,List<Integer>>>> sec_ref = jsc.broadcast(ref2);
 
         first_match.mapPartitions(s->{
+            int pr = percent.getValue();
             List<String> list = new ArrayList<>();
 //            Tuple3<Integer,List<MatchEntry>,List<String>> tu3;
             Tuple3<Integer,List<MatchEntry>,List<String>> tar;
@@ -666,7 +669,7 @@ public class App {
                     }
                 }else
                     codeSecondMatch(tar._2(),tar._1()+1,
-                            sec_ref.value()._2(),sec_ref.value()._3(),sec_ref.value()._1(),list);//传递的是分区号
+                            sec_ref.value()._2(),sec_ref.value()._3(),sec_ref.value()._1(), list, pr);//传递的是分区号
             }
             return list.iterator();
         }).saveAsTextFile(path2.toString());
