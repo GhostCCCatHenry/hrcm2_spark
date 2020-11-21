@@ -8,9 +8,11 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.mortbay.util.IO;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 
 public class tar {
@@ -35,8 +37,8 @@ public class tar {
     public void FSfetch(String inputfile, String outfile,String finalOut){
         Configuration conf = new Configuration();
         Path inpath = new Path(outfile);
-//        Path tmp = new Path("D:\\geneEXP\\out");//中间结果
-        String tmp = "/home/gene";
+
+        String tmp = "/temp/gene";
         //这里指定使用的是HDFS文件系统
         //通过如下的方式进行客户端身份的设置
 //        System.setProperty("HADOOP_USER_NAME","root");
@@ -46,20 +48,22 @@ public class tar {
 
             conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
             FileSystem fs = FileSystem.get(new URI("hdfs://master:9000"), conf);
-            File dir = new File(tmp+"/out");
 
+            File dir = new File(tmp+"/out");
             File output = new File(finalOut);
-            System.out.println(deleteFile(dir));
+            dir.mkdirs();//递归创建tmp文件夹
+            deleteFile(dir);//删除存在的out文件夹
+
             fs.moveToLocalFile(inpath,new Path(tmp));
             saveName(fs,inputfile,tmp+"/out/hdfs_name.txt");
-//            File dir = new File("D:\\geneEXP\\out\\");
             archive(dir,new File(tmp+"/out.tar"));
             if(!output.exists()) System.out.println(output.mkdir());
             callShell("./bsc e "+tmp+"/out.tar "+finalOut+"/out.bsc");
-            System.out.println(deleteFile(dir));
-            System.out.println(deleteFile(new File(tmp+"/out.tar")));
+            deleteFile(dir);
+            dir.delete();
+            deleteFile(new File(tmp+"/out.tar"));
             fs.close();
-        } catch (Exception e) {
+        } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
     }
@@ -80,7 +84,7 @@ public class tar {
         return dirFile.delete();
     }
 
-    public static void archive(File srcFile, File destFile) throws Exception {
+    public static void archive(File srcFile, File destFile) throws IOException {
         TarArchiveOutputStream taos = new TarArchiveOutputStream(
                 new FileOutputStream(destFile));
         archive(srcFile, taos, "");
@@ -89,7 +93,7 @@ public class tar {
     }
 
     private static void archive(File srcFile, TarArchiveOutputStream taos,
-                                String basePath) throws Exception {
+                                String basePath) throws IOException {
         if (srcFile.isDirectory()) {
             archiveDir(srcFile, taos, basePath);
         } else {
@@ -98,7 +102,7 @@ public class tar {
     }
 
     private static void archiveDir(File dir, TarArchiveOutputStream taos,
-                                   String basePath) throws Exception {
+                                   String basePath) throws IOException {
         File[] files = dir.listFiles();
         if (files.length < 1) {
             TarArchiveEntry entry = new TarArchiveEntry(basePath
@@ -117,7 +121,7 @@ public class tar {
      * 数据归档
      */
     private static void archiveFile(File file, TarArchiveOutputStream taos,
-                                    String dir) throws Exception {
+                                    String dir) throws IOException {
         /**
          * 归档内文件名定义
          *
