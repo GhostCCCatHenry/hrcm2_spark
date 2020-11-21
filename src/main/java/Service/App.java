@@ -117,7 +117,7 @@ public class App {
                     temp_cha = Character.toUpperCase(temp_cha);
                 }
                 else {
-                    if (Character.isLowerCase(temp_cha)) {
+                    if (Character.isUpperCase(temp_cha)) {
                         if (!flag) {
                             flag = true;
                             c.addSeq_low_length(letters_len);
@@ -160,7 +160,7 @@ public class App {
 
         for (int i = c.getSpe_cha_len() - 1; i > 0; i--)
             c.setSpe_cha_pos_Byturn(i,c.getSpe_cha_pos_Byturn(i)-c.getSpe_cha_pos_Byturn(i-1));
-
+        System.out.println(" "+c.getSeq_low_len()+" ");
         return c;
     }
 
@@ -266,16 +266,13 @@ public class App {
     private static List<Integer> runLengthCoding(int []vec ,int length, int tolerance) {
         //File fp =new File(filename);
         List<Integer> code=new ArrayList<>();
-        if (length > 0)
-        {
+        if (length > 0) {
             code.add(vec[0]);
             int cnt = 1;
-            for (int i = 1; i < length; i++)
-            {
+            for (int i = 1; i < length; i++) {
                 if (vec[i] - vec[i-1] == tolerance)
                     cnt++;
-                else
-                {
+                else {
                     code.add(cnt);
                     code.add(vec[i]);
                     cnt = 1;
@@ -293,7 +290,7 @@ public class App {
         //保存小写信息：如果匹配程度大于50%，则记录LowVecMatched和DiffLowVec；否则直接写匹配之前的结果
         if (tar.getSeq_low_len() > 0 && ref.getRef_low_len() > 0) {
             seqLowercaseMatching(tar,ref);
-            if ((2 * tar.getDiff_low_len()) < ref.getRef_low_len()) {
+            if ((2 * tar.getDiff_low_len()) < tar.getSeq_low_len()) {
                 flag = 1;
                 other.add(String.valueOf(flag));
                 List<Integer> loc = runLengthCoding(tar.getLow_loc(),tar.getSeq_low_len(),1);
@@ -303,8 +300,8 @@ public class App {
                 }
                 other.add(String.valueOf(tar.getDiff_low_len()));
                 for (int i = 0;i<=tar.getDiff_low_len();i++){
-                    other.add(String.valueOf(tar.getSeq_low_begin_Byturn(i)));
-                    other.add(String.valueOf(tar.getSeq_low_length_Byturn(i)));
+                    other.add(String.valueOf(tar.getDiff_low_begin_byturn(i)));
+                    other.add(String.valueOf(tar.getDiff_low_length_byturn(i)));
                 }
            }
         }

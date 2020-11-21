@@ -14,9 +14,9 @@ public class entrance {
         String str3 = "/gene/out";//中间结果写死
         String Out = args[2];//输出路径
 //        String str2 = "hdfs://master:9000/chr1/1/";
-//        String str1 ="D:\\geneEXP\\HRCMspark\\chr1.fa";
-//        String str2 = "D:\\geneEXP\\{chr1/*}";
-//        String str3 = "D:\\geneEXP\\HRCMspark\\out";//中间结果写死
+//        String str1 = "J:\\gene\\hg16_chr21.fa";
+//        String str2 = "J:\\gene\\{test_chr21/*}";
+//        String str3 = "J:\\gene\\out";//中间结果写死
 //        String Out = "D:\\geneEXP\\";
         App.compress(str1,str2,str3);
         tar t = new tar();

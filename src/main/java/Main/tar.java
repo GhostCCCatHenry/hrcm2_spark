@@ -3,12 +3,9 @@ package Main;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.mortbay.util.IO;
 
 import java.io.*;
 import java.net.URI;
@@ -59,7 +56,7 @@ public class tar {
             archive(dir,new File(tmp+"/out.tar"));
             if(!output.exists()) System.out.println(output.mkdir());
             callShell("./bsc e "+tmp+"/out.tar "+finalOut+"/out.bsc");
-            deleteFile(dir);
+            deleteFile(new File(tmp));
             dir.delete();
             deleteFile(new File(tmp+"/out.tar"));
             fs.close();

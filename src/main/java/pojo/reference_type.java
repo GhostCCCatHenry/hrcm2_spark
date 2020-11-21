@@ -75,7 +75,7 @@ public class reference_type implements java.io.Serializable{
         this.ref_code = ref_code;
     }
 
-    public void set_Ref_code_byturn(char code,int len){ref_code[len] = code;}
+    public void set_Ref_code_byturn(char code,int len){this.ref_code[len] = code;}
 
     private char []ref_code;
 
@@ -88,7 +88,7 @@ public class reference_type implements java.io.Serializable{
         this.ref_low_begin = ref_low_begin;
     }
 
-    public void set_Ref_low_begin_byturn(int begin,int len){ref_low_begin[len] = begin;}
+    public void set_Ref_low_begin_byturn(int begin,int len){this.ref_low_begin[len] = begin;}
 
     public void setRefLoc(int[] refLoc) {
         this.refLoc = refLoc;
@@ -109,7 +109,7 @@ public class reference_type implements java.io.Serializable{
         this.ref_low_length = ref_low_length;
     }
 
-    public void set_Ref_low_length_byturn(int length,int len){ref_low_length[len] = length;}
+    public void set_Ref_low_length_byturn(int length,int len){this.ref_low_length[len] = length;}
 
     private int[] ref_low_length = new int[VEC_SIZE/2];
 

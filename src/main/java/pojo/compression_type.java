@@ -41,7 +41,7 @@ public class compression_type implements java.io.Serializable{
     }
 
     public void addSeq_low_begin(int begin) {
-        seq_low_begin[seq_low_len] = begin;
+        this.seq_low_begin[seq_low_len] = begin;
     }
 
     public void setSeq_low_begin_Byturn(int begin,int len) {seq_low_begin[len] = begin;}
@@ -51,7 +51,7 @@ public class compression_type implements java.io.Serializable{
     }
 
     public void addSeq_low_length(int length) {
-        seq_low_length[seq_low_len++] = length;
+        this.seq_low_length[seq_low_len++] = length;
     }
 
     public int getnCha_begin_Byturn(int len) {
@@ -87,7 +87,7 @@ public class compression_type implements java.io.Serializable{
     }
 
     public void setSpe_cha_pos_Byturn(int len,int pos) {
-        spe_cha_pos[len] = pos;
+        this.spe_cha_pos[len] = pos;
     }
 
     public int getSpe_cha_ch_Byturn(int len) {
@@ -194,6 +194,14 @@ public class compression_type implements java.io.Serializable{
 
     public void setDiff_low_length(int[] diff_low_length) {
         this.diff_low_length = diff_low_length;
+    }
+
+    public int getDiff_low_begin_byturn(int len) {
+        return diff_low_begin[len];
+    }
+
+    public int getDiff_low_length_byturn(int len) {
+        return diff_low_length[len];
     }
 
     private int[] diff_low_begin ;
